@@ -38,7 +38,6 @@ var is_showing_ui : bool
 @onready var crouching_collision_shape: CollisionShape3D = $CrouchingCollisionShape
 @onready var crouch_raycast: RayCast3D = $CrouchRayCast
 @onready var sliding_timer: Timer = $SlidingTimer
-@onready var footstep_timer: Timer = $FootstepTimer
 @onready var jump_timer: Timer = $JumpCooldownTimer
 
 ## Inventory resource that stores the player inventory.
@@ -46,15 +45,10 @@ var is_showing_ui : bool
 
 # Adding carryable position for item control.
 @onready var carryable_position = %CarryablePosition
-@onready var footstep_player = $FootstepPlayer
-@onready var footstep_surface_detector : FootstepSurfaceDetector = $FootstepPlayer
 
 @export_group("Audio")
 ## AudioStream that gets played when the player jumps.
 @export var jump_sound : AudioStream
-@export var walk_volume_db : float = -38.0
-@export var sprint_volume_db : float = -30.0
-@export var crouch_volume_db : float = -60.0
 
 @export_group("Movement Properties")
 @export var JUMP_VELOCITY = 4.5
@@ -477,7 +471,6 @@ func _physics_process(delta):
 			delta*LERP_SPEED
 		)
 	
-	
 	### STAIR FLOOR SNAP
 		#jumping and gravity
 	if is_on_floor():
@@ -486,9 +479,7 @@ func _physics_process(delta):
 	else:
 		snap = Vector3.DOWN
 		gravity_vec = Vector3.DOWN * gravity * delta
-	###
-	
-	
+
 	if not is_on_floor():
 		#snap = Vector3.DOWN
 		#velocity.y -= gravity * delta
@@ -591,10 +582,9 @@ func _physics_process(delta):
 	
 	last_velocity = velocity
 
-
 	# STAIR HANDLING
 	is_step = false
-	
+
 	if gravity_vec.y >= 0:
 		for i in range(STEP_CHECK_COUNT):			
 			var step_height: Vector3 = STEP_HEIGHT_DEFAULT - i * step_check_height
@@ -656,8 +646,6 @@ func _physics_process(delta):
 								global_transform.origin += -test_motion_result.get_remainder()
 								break
 
-	
-	
 	if not is_step and is_on_floor():
 		var step_height: Vector3 = STEP_HEIGHT_DEFAULT
 		var transform3d: Transform3D = global_transform
@@ -692,8 +680,7 @@ func _physics_process(delta):
 							global_transform.origin += test_motion_result.get_travel()
 					else:
 						is_falling = true
-	
-	
+
 	if is_step and !is_falling:
 		head.position -= head_offset
 		head.position.y = lerp(head.position.y, 0.0, delta * step_height_camera_lerp)
@@ -706,33 +693,11 @@ func _physics_process(delta):
 	if is_falling:
 		snap = Vector3.ZERO
 
-
 	#if !is_movement_paused:
 	move_and_slide()
-	
-	
-	# FOOTSTEP SOUNDS SYSTEM = CHECK IF ON GROUND AND MOVING
-	if is_on_floor() and velocity.length() >= 0.2:
-		if footstep_timer.time_left <= 0:
-			#dynamic volume for footsteps
-			if is_walking:
-				footstep_player.volume_db = walk_volume_db
-			elif is_crouching:
-				footstep_player.volume_db = crouch_volume_db
-			elif is_sprinting:
-				footstep_player.volume_db = sprint_volume_db
-			footstep_surface_detector.play_footstep()
-			# These "magic numbers" determine the frequency of sounds depending on speed of player. Need to make these variables.
-			if velocity.length() >= 3.4:
-				footstep_timer.start(.3)
-			else:
-				footstep_timer.start(.6)
 
 func _on_sliding_timer_timeout():
 	is_free_looking = false
 
 func _on_animation_player_animation_finished(anim_name):
 	stand_after_roll = anim_name == 'roll' and !is_crouching
-
-
-
