@@ -1,4 +1,5 @@
 extends CharacterBody3D
+#region Signals, Variables and Noteloads
 
 signal menu_pressed(player_interaction_component: PlayerInteractionComponent) #Used to exit out other interfaces when ESC/Menu is pressed.
 signal toggle_inventory_interface()
@@ -45,9 +46,15 @@ var is_showing_ui : bool
 @export var inventory_data : InventoryPD
 
 # Adding carryable position for item control.
-@onready var carryable_position = %CarryablePosition
-@onready var footstep_player = $FootstepPlayer
+@onready var carryable_position : Node3D = %CarryablePosition
+@onready var footstep_player : Node3D = $FootstepPlayer
 @onready var footstep_surface_detector : FootstepSurfaceDetector = $FootstepPlayer
+
+# Cache allocation of test motion parameters.
+@onready var _params: PhysicsTestMotionParameters3D = PhysicsTestMotionParameters3D.new()
+
+@onready var self_rid: RID = self.get_rid()
+@onready var test_motion_result: PhysicsTestMotionResult3D = PhysicsTestMotionResult3D.new()
 
 @export_group("Audio")
 ## AudioStream that gets played when the player jumps.
@@ -57,27 +64,27 @@ var is_showing_ui : bool
 @export var crouch_volume_db : float = -60.0
 
 @export_group("Movement Properties")
-@export var JUMP_VELOCITY = 4.5
-@export var WALKING_SPEED = 5.0
-@export var SPRINTING_SPEED = 8.0
-@export var CROUCHING_SPEED = 3.0
-@export var CROUCHING_DEPTH = -0.9
-@export var CAN_CROUCH_JUMP = true
-@export var MOUSE_SENS = 0.25
-@export var LERP_SPEED = 10.0
-@export var AIR_LERP_SPEED = 6.0
-@export var FREE_LOOK_TILT_AMOUNT = 5.0
-@export var SLIDING_SPEED = 5.0
+@export var JUMP_VELOCITY : float = 4.5
+@export var WALKING_SPEED : float  = 5.0
+@export var SPRINTING_SPEED : float  = 8.0
+@export var CROUCHING_SPEED : float  = 3.0
+@export var CROUCHING_DEPTH : float  = -0.9
+@export var CAN_CROUCH_JUMP : bool = true
+@export var MOUSE_SENS : float = 0.25
+@export var LERP_SPEED : float  = 10.0
+@export var AIR_LERP_SPEED : float  = 6.0
+@export var FREE_LOOK_TILT_AMOUNT : float  = 5.0
+@export var SLIDING_SPEED : float  = 5.0
 
 @export_enum("Minimal:1", "Average:3", "Full:7") var HEADBOBBLE : int
-var WIGGLE_ON_WALKING_SPEED = 14.0
-var WIGGLE_ON_SPRINTING_SPEED = 22.0
-var WIGGLE_ON_CROUCHING_SPEED = 10.0
+var WIGGLE_ON_WALKING_SPEED : float  = 14.0
+var WIGGLE_ON_SPRINTING_SPEED : float  = 22.0
+var WIGGLE_ON_CROUCHING_SPEED : float  = 10.0
 
-@export var WIGGLE_ON_WALKING_INTENSITY = 0.1
-@export var WIGGLE_ON_SPRINTING_INTENSITY = 0.2
-@export var WIGGLE_ON_CROUCHING_INTENSITY = 0.05
-@export var BUNNY_HOP_ACCELERATION = 0.1
+@export var WIGGLE_ON_WALKING_INTENSITY : float  = 0.1
+@export var WIGGLE_ON_SPRINTING_INTENSITY : float  = 0.2
+@export var WIGGLE_ON_CROUCHING_INTENSITY : float  = 0.05
+@export var BUNNY_HOP_ACCELERATION : float = 0.1
 @export var INVERT_Y_AXIS : bool = true
 
 ## STAIR HANDLING STUFF
@@ -96,7 +103,6 @@ var snap : Vector3 = Vector3.ZERO
 const STEP_CHECK_COUNT : int = 2
 const WALL_MARGIN : float = 0.001
 
-
 @export_group("Ladder Handling")
 var on_ladder : bool = false
 @export var ladder_speed : float = 2.0
@@ -113,30 +119,29 @@ var initial_carryable_height #DEPRECATED Used to change carryable position based
 
 var config = ConfigFile.new()
 
-var current_speed = 5.0
-var gravity = ProjectSettings.get_setting("physics/3d/default_gravity")
-var direction = Vector3.ZERO
-var is_walking = false
-var is_sprinting = false
-var is_crouching = false
-var is_free_looking = false
-var slide_vector = Vector2.ZERO
-var wiggle_vector = Vector2.ZERO
-var wiggle_index = 0.0
-var wiggle_current_intensity = 0.0
-var bunny_hop_speed = SPRINTING_SPEED
-var last_velocity = Vector3.ZERO
-var stand_after_roll = false
-var is_movement_paused = false
+var current_speed : float  = 5.0
+var gravity : float  = ProjectSettings.get_setting("physics/3d/default_gravity")
+var direction : Vector3 = Vector3.ZERO
+var is_walking : bool = false
+var is_sprinting : bool = false
+var is_crouching : bool = false
+var is_free_looking : bool = false
+var slide_vector : Vector2 = Vector2.ZERO
+var wiggle_vector : Vector2 = Vector2.ZERO
+var wiggle_index : float = 0.0
+var wiggle_current_intensity : float  = 0.0
+var bunny_hop_speed : float = SPRINTING_SPEED
+var last_velocity : Vector3 = Vector3.ZERO
+var stand_after_roll : bool = false
+var is_movement_paused : bool = false
 var is_dead : bool = false
-
+#endregion
 
 # Use this to refresh/update when a player state is loaded.
 func _on_player_state_loaded():
 	health_component.health_changed.emit(health_component.current_health,health_component.max_health)
 	stamina_component.stamina_changed.emit(stamina_component.current_stamina,stamina_component.max_stamina)
 	sanity_component.sanity_changed.emit(sanity_component.current_sanity,sanity_component.max_sanity)
-
 
 func _ready():
 	#Some Setup steps
@@ -164,206 +169,6 @@ func _ready():
 	
 	health_component.death.connect(_on_death) # Hookup HealthComponent signal to detect player death
 	brightness_component.brightness_changed.connect(_on_brightness_changed) # Hookup brightness component signal
-
-# Use this function to manipulate player attributes.
-func increase_attribute(attribute_name: String, value: float) -> bool:
-	match attribute_name:
-		"health":
-			if health_component.current_health == health_component.max_health:
-				return false
-			else:
-				health_component.add(value)
-				return true
-		"health_max":
-			health_component.max_health += value
-			health_component.health_changed.emit(health_component.current_health,health_component.max_health)
-			return true
-		"sanity":
-			if sanity_component.current_sanity == sanity_component.max_sanity:
-				return false
-			else:
-				sanity_component.add(value)
-				return true
-		"sanity_max":
-			sanity_component.max_sanity += value
-			sanity_component.sanity_changed.emit(sanity_component.current_sanity,sanity_component.max_sanity)
-			return true
-		"stamina":
-			if stamina_component.current_stamina == stamina_component.max_stamina:
-				return false
-			else:
-				stamina_component.add(value)
-				return true
-		"stamina_max":
-			stamina_component.max_stamina += value
-			stamina_component.stamina_changed.emit(stamina_component.current_stamina,stamina_component.max_stamina)
-			return true
-		_:
-			print("Increase attribute failed: no match.")
-			return false
-
-
-func decrease_attribute(attribute_name: String, value: float):
-	match attribute_name:
-		"health":
-			health_component.subtract(value)
-		"sanity":
-			sanity_component.subtract(value)
-		"stamina":
-			stamina_component.subtract(value)
-		_:
-			print("Decrease attribute failed: no match.")
-
-
-func take_damage(value):
-	health_component.subtract(value)
-
-
-func add_sanity(value):
-	sanity_component.add(value)
-
-
-func _on_death():
-	is_dead = true
-
-
-func _on_brightness_changed(current_brightness,max_brightness):
-	print("Brightness changed to ", current_brightness)
-	if current_brightness <= 0 and is_using_sanity:
-		if sanity_component.is_recovering:
-			sanity_component.stop_recovery()
-		else:
-			sanity_component.start_decay()
-	elif is_using_sanity:
-		sanity_component.stop_decay()
-		print("Checking if ", (sanity_component.current_sanity/sanity_component.max_sanity), " < ", (current_brightness/max_brightness))
-		if (sanity_component.current_sanity/sanity_component.max_sanity) < (current_brightness/max_brightness):
-			sanity_component.start_recovery(2.0, (sanity_component.max_sanity/max_brightness) * current_brightness)
-			
-
-# Methods to pause input (for Menu or Dialogues etc)
-func _on_pause_movement():
-	if !is_movement_paused:
-		is_movement_paused = true
-		Input.set_mouse_mode(Input.MOUSE_MODE_VISIBLE)
-
-func _on_resume_movement():
-	if is_movement_paused:
-		is_movement_paused = false
-		Input.set_mouse_mode(Input.MOUSE_MODE_CAPTURED)
-
-# reload options user may have changed while paused.
-func _reload_options():
-	var err = config.load(OptionsConstants.config_file_name)
-	if err == 0:
-		INVERT_Y_AXIS = config.get_value(OptionsConstants.section_name, OptionsConstants.invert_vertical_axis_key, true)
-
-# Signal from Pause Menu
-func _on_pause_menu_resume():
-	_reload_options()
-	_on_resume_movement()
-
-
-func _input(event):
-	if event is InputEventMouseMotion and !is_movement_paused:
-		if is_free_looking:
-			neck.rotate_y(deg_to_rad(-event.relative.x * MOUSE_SENS))
-			neck.rotation.y = clamp(neck.rotation.y, deg_to_rad(-120), deg_to_rad(120))
-		else:
-			rotate_y(deg_to_rad(-event.relative.x * MOUSE_SENS))
-		
-		if INVERT_Y_AXIS:
-			head.rotate_x(-deg_to_rad(-event.relative.y * MOUSE_SENS))
-		else:
-			head.rotate_x(deg_to_rad(-event.relative.y * MOUSE_SENS))
-		head.rotation.x = clamp(head.rotation.x, deg_to_rad(-90), deg_to_rad(90))
-		
-	# Checking Analog stick input for mouse look
-	if event is InputEventJoypadMotion and !is_movement_paused:
-		if event.get_axis() == 2:
-			joystick_v_event = event
-		if event.get_axis() == 3:
-			joystick_h_event = event
-	
-	# Opens Pause Menu if Menu button is proessed.
-	if event.is_action_pressed("menu"):
-		if is_showing_ui: #Behaviour when pressing ESC/menu while external UI is open (Readables, Keypad, etc)
-			menu_pressed.emit(player_interaction_component)
-			if get_node(player_hud).inventory_interface.is_inventory_open: #Behaviour when pressing ESC/menu while Inventory is open
-				toggle_inventory_interface.emit()
-		elif !is_movement_paused and !is_dead:
-			_on_pause_movement()
-			get_node(pause_menu).open_pause_menu()
-	
-	# Open/closes Inventory if Inventory button is pressed
-	if event.is_action_pressed("inventory") and !is_dead:
-		if !is_showing_ui: #Making sure now external UI is open.
-			toggle_inventory_interface.emit()
-		elif is_showing_ui and get_node(player_hud).inventory_interface.is_inventory_open: #Making sure Inventory is open, and if yes, close it.
-			toggle_inventory_interface.emit()
-
-
-func _process(delta): 
-	# If SanityComponent is used, this decreases health when sanity is 0.
-	if is_using_sanity and sanity_component.current_sanity <= 0:
-		print("Taking damage due to 0 sanity.")
-		take_damage(health_component.no_sanity_damage * delta)
-
-# Cache allocation of test motion parameters.
-@onready var _params: PhysicsTestMotionParameters3D = PhysicsTestMotionParameters3D.new()
-
-func params(transform3d, motion):
-	var params : PhysicsTestMotionParameters3D = _params
-	params.from = transform3d
-	params.motion = motion
-	params.recovery_as_collision = true
-	return params
-
-@onready var self_rid: RID = self.get_rid()
-@onready var test_motion_result: PhysicsTestMotionResult3D = PhysicsTestMotionResult3D.new()
-
-func test_motion(transform3d: Transform3D, motion: Vector3) -> bool:
-	return PhysicsServer3D.body_test_motion(self_rid, params(transform3d, motion), test_motion_result)	
-
-### LADDER MOVEMENT
-func _process_on_ladder(_delta):
-	var input_dir
-	if !is_movement_paused:
-		input_dir = Input.get_vector("left", "right", "forward", "back")
-	else:
-		input_dir = Vector2.ZERO
-		
-	var jump = Input.is_action_pressed("jump")
-
-	# Processing analog stick mouselook
-	if joystick_h_event:
-			if abs(joystick_h_event.get_axis_value()) > JOY_DEADZONE:
-				if INVERT_Y_AXIS:
-					head.rotate_x(deg_to_rad(joystick_h_event.get_axis_value() * JOY_H_SENS))
-				else:
-					head.rotate_x(-deg_to_rad(joystick_h_event.get_axis_value() * JOY_H_SENS))
-				head.rotation.x = clamp(head.rotation.x, deg_to_rad(-90), deg_to_rad(90))
-				
-	if joystick_v_event:
-		if abs(joystick_v_event.get_axis_value()) > JOY_DEADZONE:
-			neck.rotate_y(deg_to_rad(-joystick_v_event.get_axis_value() * JOY_V_SENS))
-			neck.rotation.y = clamp(neck.rotation.y, deg_to_rad(-120), deg_to_rad(120))
-
-	# Applying ladder input_dir to direction
-	direction = (transform.basis * Vector3(input_dir.x,input_dir.y * -1,0)).normalized()
-	velocity = direction * ladder_speed
-
-	var look_vector = camera.get_camera_transform().basis
-	if jump:
-		velocity += look_vector * Vector3(JUMP_VELOCITY, JUMP_VELOCITY, JUMP_VELOCITY)
-	
-	# print("Input_dir:", input_dir, ". direction:", direction)
-	move_and_slide()
-	
-	#Step off ladder when on ground
-	if is_on_floor():
-		on_ladder = false
-
 
 func _physics_process(delta):
 	#if is_movement_paused:
@@ -438,7 +243,7 @@ func _physics_process(delta):
 			is_walking = false
 			is_sprinting = true
 			is_crouching = false
-		elif Input.is_action_pressed("sprint") and !is_using_stamina:	
+		elif Input.is_action_pressed("sprint") and !is_using_stamina:
 			if !Input.is_action_pressed("jump"):
 				bunny_hop_speed = SPRINTING_SPEED
 			current_speed = lerp(current_speed, bunny_hop_speed, delta * LERP_SPEED)
@@ -522,7 +327,7 @@ func _physics_process(delta):
 		if fall_damage > 0 and last_velocity.y <= fall_damage_threshold:
 			health_component.subtract(fall_damage)
 	
-	if Input.is_action_pressed("jump") and !is_movement_paused and is_on_floor() and jump_timer.is_stopped():
+	if Input.is_action_just_pressed("jump") and !is_movement_paused and is_on_floor() and jump_timer.is_stopped():
 		jump_timer.start() # prevent spam
 		var doesnt_need_stamina = not is_using_stamina or stamina_component.current_stamina >= stamina_component.jump_exhaustion
 		var crouch_jump = not is_crouching or CAN_CROUCH_JUMP
@@ -728,11 +533,195 @@ func _physics_process(delta):
 			else:
 				footstep_timer.start(.6)
 
+func _input(event):
+	if event is InputEventMouseMotion and !is_movement_paused:
+		if is_free_looking:
+			neck.rotate_y(deg_to_rad(-event.relative.x * MOUSE_SENS))
+			neck.rotation.y = clamp(neck.rotation.y, deg_to_rad(-120), deg_to_rad(120))
+		else:
+			rotate_y(deg_to_rad(-event.relative.x * MOUSE_SENS))
+		
+		if INVERT_Y_AXIS:
+			head.rotate_x(-deg_to_rad(-event.relative.y * MOUSE_SENS))
+		else:
+			head.rotate_x(deg_to_rad(-event.relative.y * MOUSE_SENS))
+		head.rotation.x = clamp(head.rotation.x, deg_to_rad(-90), deg_to_rad(90))
+		
+	# Checking Analog stick input for mouse look
+	if event is InputEventJoypadMotion and !is_movement_paused:
+		if event.get_axis() == 2:
+			joystick_v_event = event
+		if event.get_axis() == 3:
+			joystick_h_event = event
+	
+	# Opens Pause Menu if Menu button is proessed.
+	if event.is_action_pressed("menu"):
+		if is_showing_ui: #Behaviour when pressing ESC/menu while external UI is open (Readables, Keypad, etc)
+			menu_pressed.emit(player_interaction_component)
+			if get_node(player_hud).inventory_interface.is_inventory_open: #Behaviour when pressing ESC/menu while Inventory is open
+				toggle_inventory_interface.emit()
+		elif !is_movement_paused and !is_dead:
+			_on_pause_movement()
+			get_node(pause_menu).open_pause_menu()
+	
+	# Open/closes Inventory if Inventory button is pressed
+	if event.is_action_pressed("inventory") and !is_dead:
+		if !is_showing_ui: #Making sure now external UI is open.
+			toggle_inventory_interface.emit()
+		elif is_showing_ui and get_node(player_hud).inventory_interface.is_inventory_open: #Making sure Inventory is open, and if yes, close it.
+			toggle_inventory_interface.emit()
+
+func _process(delta): 
+	# If SanityComponent is used, this decreases health when sanity is 0.
+	if is_using_sanity and sanity_component.current_sanity <= 0:
+		print("Taking damage due to 0 sanity.")
+		take_damage(health_component.no_sanity_damage * delta)
+
+#region Pause Functions
+# Methods to pause input (for Menu or Dialogues etc)
+func _on_pause_movement():
+	if !is_movement_paused:
+		is_movement_paused = true
+		Input.set_mouse_mode(Input.MOUSE_MODE_VISIBLE)
+
+func _on_resume_movement():
+	if is_movement_paused:
+		is_movement_paused = false
+		Input.set_mouse_mode(Input.MOUSE_MODE_CAPTURED)
+
+# reload options user may have changed while paused.
+func _reload_options():
+	var err = config.load(OptionsConstants.config_file_name)
+	if err == 0:
+		INVERT_Y_AXIS = config.get_value(OptionsConstants.section_name, OptionsConstants.invert_vertical_axis_key, true)
+
+# Signal from Pause Menu
+func _on_pause_menu_resume():
+	_reload_options()
+	_on_resume_movement()
+
+#endregion
+# Use this function to manipulate player attributes.
+func increase_attribute(attribute_name: String, value: float) -> bool:
+	match attribute_name:
+		"health":
+			if health_component.current_health == health_component.max_health:
+				return false
+			else:
+				health_component.add(value)
+				return true
+		"health_max":
+			health_component.max_health += value
+			health_component.health_changed.emit(health_component.current_health,health_component.max_health)
+			return true
+		"sanity":
+			if sanity_component.current_sanity == sanity_component.max_sanity:
+				return false
+			else:
+				sanity_component.add(value)
+				return true
+		"sanity_max":
+			sanity_component.max_sanity += value
+			sanity_component.sanity_changed.emit(sanity_component.current_sanity,sanity_component.max_sanity)
+			return true
+		"stamina":
+			if stamina_component.current_stamina == stamina_component.max_stamina:
+				return false
+			else:
+				stamina_component.add(value)
+				return true
+		"stamina_max":
+			stamina_component.max_stamina += value
+			stamina_component.stamina_changed.emit(stamina_component.current_stamina,stamina_component.max_stamina)
+			return true
+		_:
+			print("Increase attribute failed: no match.")
+			return false
+# Use this function to manipulate player attributes.
+func decrease_attribute(attribute_name: String, value: float):
+	match attribute_name:
+		"health":
+			health_component.subtract(value)
+		"sanity":
+			sanity_component.subtract(value)
+		"stamina":
+			stamina_component.subtract(value)
+		_:
+			print("Decrease attribute failed: no match.")
+
+func take_damage(value):
+	health_component.subtract(value)
+
+func _on_death():
+	is_dead = true
+
+func add_sanity(value):
+	sanity_component.add(value)
+
+func _on_brightness_changed(current_brightness,max_brightness):
+	print("Brightness changed to ", current_brightness)
+	if current_brightness <= 0 and is_using_sanity:
+		if sanity_component.is_recovering:
+			sanity_component.stop_recovery()
+		else:
+			sanity_component.start_decay()
+	elif is_using_sanity:
+		sanity_component.stop_decay()
+		print("Checking if ", (sanity_component.current_sanity/sanity_component.max_sanity), " < ", (current_brightness/max_brightness))
+		if (sanity_component.current_sanity/sanity_component.max_sanity) < (current_brightness/max_brightness):
+			sanity_component.start_recovery(2.0, (sanity_component.max_sanity/max_brightness) * current_brightness)
+
+func params(transform3d, motion):
+	var params : PhysicsTestMotionParameters3D = _params
+	params.from = transform3d
+	params.motion = motion
+	params.recovery_as_collision = true
+	return params
+
+func test_motion(transform3d: Transform3D, motion: Vector3) -> bool:
+	return PhysicsServer3D.body_test_motion(self_rid, params(transform3d, motion), test_motion_result)	
+
+# Ladder Movement
+func _process_on_ladder(_delta):
+	var input_dir
+	if !is_movement_paused:
+		input_dir = Input.get_vector("left", "right", "forward", "back")
+	else:
+		input_dir = Vector2.ZERO
+		
+	var jump = Input.is_action_just_pressed("jump")
+
+	# Processing analog stick mouselook
+	if joystick_h_event:
+			if abs(joystick_h_event.get_axis_value()) > JOY_DEADZONE:
+				if INVERT_Y_AXIS:
+					head.rotate_x(deg_to_rad(joystick_h_event.get_axis_value() * JOY_H_SENS))
+				else:
+					head.rotate_x(-deg_to_rad(joystick_h_event.get_axis_value() * JOY_H_SENS))
+				head.rotation.x = clamp(head.rotation.x, deg_to_rad(-90), deg_to_rad(90))
+				
+	if joystick_v_event:
+		if abs(joystick_v_event.get_axis_value()) > JOY_DEADZONE:
+			neck.rotate_y(deg_to_rad(-joystick_v_event.get_axis_value() * JOY_V_SENS))
+			neck.rotation.y = clamp(neck.rotation.y, deg_to_rad(-120), deg_to_rad(120))
+
+	# Applying ladder input_dir to direction
+	direction = (transform.basis * Vector3(input_dir.x,input_dir.y * -1,0)).normalized()
+	velocity = direction * ladder_speed
+
+	var look_vector = camera.get_camera_transform().basis
+	if jump:
+		velocity += look_vector * Vector3(JUMP_VELOCITY, JUMP_VELOCITY, JUMP_VELOCITY)
+	
+	# print("Input_dir:", input_dir, ". direction:", direction)
+	move_and_slide()
+	
+	#Step off ladder when on ground
+	if is_on_floor():
+		on_ladder = false
+# Sliding Movement
 func _on_sliding_timer_timeout():
 	is_free_looking = false
 
 func _on_animation_player_animation_finished(anim_name):
 	stand_after_roll = anim_name == 'roll' and !is_crouching
-
-
-
