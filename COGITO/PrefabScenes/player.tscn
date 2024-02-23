@@ -13,7 +13,7 @@
 [ext_resource type="PackedScene" uid="uid://dy3tudla5p2nc" path="res://COGITO/Components/PlayerInteractionComponent.tscn" id="13_rawn6"]
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_bvi11"]
-size = Vector3(0.8, 1.6, 0.8)
+size = Vector3(0.7, 1.6, 0.7)
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_fgxde"]
 radius = 0.4
