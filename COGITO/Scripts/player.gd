@@ -84,7 +84,7 @@ var WIGGLE_ON_CROUCHING_SPEED : float  = 10.0
 @export var WIGGLE_ON_WALKING_INTENSITY : float  = 0.1
 @export var WIGGLE_ON_SPRINTING_INTENSITY : float  = 0.2
 @export var WIGGLE_ON_CROUCHING_INTENSITY : float  = 0.05
-@export var BUNNY_HOP_ACCELERATION : float = 0.1
+
 @export var INVERT_Y_AXIS : bool = true
 
 ## STAIR HANDLING STUFF
@@ -119,6 +119,7 @@ var initial_carryable_height #DEPRECATED Used to change carryable position based
 
 var config = ConfigFile.new()
 
+
 var current_speed : float  = 5.0
 var gravity : float  = ProjectSettings.get_setting("physics/3d/default_gravity")
 var direction : Vector3 = Vector3.ZERO
@@ -130,7 +131,6 @@ var slide_vector : Vector2 = Vector2.ZERO
 var wiggle_vector : Vector2 = Vector2.ZERO
 var wiggle_index : float = 0.0
 var wiggle_current_intensity : float  = 0.0
-var bunny_hop_speed : float = SPRINTING_SPEED
 var last_velocity : Vector3 = Vector3.ZERO
 var stand_after_roll : bool = false
 var is_movement_paused : bool = false
@@ -235,18 +235,12 @@ func _physics_process(delta):
 		sliding_timer.stop()
 		# Prevent sprinting if player is out of stamina.
 		if Input.is_action_pressed("sprint") and is_using_stamina and stamina_component.current_stamina > 0:
-			if !Input.is_action_pressed("jump"):
-				bunny_hop_speed = SPRINTING_SPEED
-			current_speed = lerp(current_speed, bunny_hop_speed, delta * LERP_SPEED)
 			wiggle_current_intensity = WIGGLE_ON_SPRINTING_INTENSITY
 			wiggle_index += WIGGLE_ON_SPRINTING_SPEED * delta
 			is_walking = false
 			is_sprinting = true
 			is_crouching = false
-		elif Input.is_action_pressed("sprint") and !is_using_stamina:
-			if !Input.is_action_pressed("jump"):
-				bunny_hop_speed = SPRINTING_SPEED
-			current_speed = lerp(current_speed, bunny_hop_speed, delta * LERP_SPEED)
+		elif Input.is_action_pressed("sprint") and !is_using_stamina:	
 			wiggle_current_intensity = WIGGLE_ON_SPRINTING_INTENSITY
 			wiggle_index += WIGGLE_ON_SPRINTING_SPEED * delta
 			is_walking = false
@@ -357,9 +351,7 @@ func _physics_process(delta):
 				velocity += platform_velocity
 			
 			if is_sprinting:
-				bunny_hop_speed += BUNNY_HOP_ACCELERATION
-			else:
-				bunny_hop_speed = SPRINTING_SPEED
+				SPRINTING_SPEED += SPRINTING_SPEED
 			
 			if is_crouching:
 				#temporarily switch colliders to process jump correctly
