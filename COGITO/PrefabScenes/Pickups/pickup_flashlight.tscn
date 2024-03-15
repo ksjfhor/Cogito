@@ -1,10 +1,10 @@
 [gd_scene load_steps=10 format=3 uid="uid://cwd3g16ep0idw"]
 
-[ext_resource type="Script" path="res://COGITO/Scripts/Cogito_Object.gd" id="1_p4i4k"]
-[ext_resource type="PackedScene" uid="uid://1xq4y42qkcur" path="res://COGITO/Components/PickupComponent.tscn" id="2_n5am4"]
+[ext_resource type="Script" path="res://COGITO/CogitoObjects/Cogito_Object.gd" id="1_p4i4k"]
+[ext_resource type="PackedScene" uid="uid://1xq4y42qkcur" path="res://COGITO/Components/Interactions/PickupComponent.tscn" id="2_n5am4"]
 [ext_resource type="Resource" uid="uid://ckvdkigvwowm5" path="res://COGITO/InventoryPD/Items/Cogito_Flashlight.tres" id="2_sm7gp"]
 [ext_resource type="Script" path="res://COGITO/InventoryPD/CustomResources/InventorySlotPD.gd" id="3_0bl2i"]
-[ext_resource type="PackedScene" uid="uid://cio4x05ipvslu" path="res://COGITO/Components/CarryableComponent.tscn" id="5_fvuvi"]
+[ext_resource type="PackedScene" uid="uid://cio4x05ipvslu" path="res://COGITO/Components/Interactions/CarryableComponent.tscn" id="5_fvuvi"]
 
 [sub_resource type="Resource" id="Resource_frpox"]
 script = ExtResource("3_0bl2i")
@@ -34,12 +34,9 @@ script = ExtResource("1_p4i4k")
 
 [node name="PickupComponent" parent="." instance=ExtResource("2_n5am4")]
 slot_data = SubResource("Resource_frpox")
-input_map_action = "interact"
-interaction_text = "Pick up"
 
 [node name="CarryableComponent" parent="." instance=ExtResource("5_fvuvi")]
-input_map_action = "interact2"
-interaction_text = "Carry"
+carry_distance_offset = -0.5
 
 [node name="CSGCylinder3D" type="CSGCylinder3D" parent="."]
 transform = Transform3D(-4.37114e-08, 1, 0, -1, -4.37114e-08, 0, 0, 0, 1, -0.0541318, 0, 0)

@@ -6,6 +6,8 @@ extends Node
 # Variables for player state
 @export var _current_player_node : Node
 @export var _player_state : CogitoPlayerState
+# Used to pass a screenshot to the player state when saved. This is created by the TabMenu/PauseMenu
+@export var _screenshot_to_save : Image
 
 # Variables for scene state
 @export var _current_scene_name : String
@@ -15,8 +17,26 @@ extends Node
 enum CogitoSceneLoadMode {TEMP, LOAD_SAVE, RESET}
 @export var scene_load_mode: CogitoSceneLoadMode
 
+@export var cogito_state_dir : String = "user://"
+@export var cogito_scene_state_prefix : String = "COGITO_scene_state_"
+@export var cogito_player_state_prefix : String = "COGITO_player_state_"
 
-func loading_saved_game(passed_slot):
+func _ready() -> void:
+	_player_state = get_existing_player_state(_active_slot) #Setting active slot (per default it's A)
+
+
+func get_existing_player_state(passed_slot) -> CogitoPlayerState:
+	var player_state_file : String = cogito_state_dir + cogito_player_state_prefix + passed_slot + ".res"
+	print("CSM: Looking for file: ", player_state_file)
+	if ResourceLoader.exists(player_state_file):
+		print("CSM: Get existing player state: found for slot ", passed_slot, ".")
+		return ResourceLoader.load(player_state_file, "", ResourceLoader.CACHE_MODE_IGNORE)
+	else:
+		print("CSM: Get existing player state: No player state found for slot ", passed_slot)
+		return null
+
+
+func loading_saved_game(passed_slot: String):
 	print("CSM: Loading saved game from slot ", passed_slot)
 	if !_player_state or !_player_state.state_exists(passed_slot):
 		print("CSM: Player state of passed slot doesn't exist.")
@@ -47,7 +67,6 @@ func load_player_state(player, passed_slot:String):
 		_player_state = _player_state.load_state(passed_slot) as CogitoPlayerState
 		
 		# Applying the save state to player node.
-		
 		player.inventory_data = _player_state.player_inventory #Loading inventory data from saved player state to current player inventory.
 		
 		# Loading quests from player state:
@@ -77,13 +96,12 @@ func load_player_state(player, passed_slot:String):
 						
 		player.inventory_data.force_inventory_update()
 		
-		player.health_component.current_health = _player_state.player_health.x
-		player.health_component.max_health = _player_state.player_health.y
-		player.stamina_component.current_stamina = _player_state.player_stamina.x
-		player.stamina_component.max_stamina = _player_state.player_stamina.y
-		player.sanity_component.current_sanity = _player_state.player_sanity.x
-		player.sanity_component.max_sanity = _player_state.player_sanity.y
-				
+		# New way of loading player attributes:
+		var loaded_attribute_data = _player_state.player_attributes
+		for i in loaded_attribute_data.size():
+			player.player_attributes[i].set_attribute(loaded_attribute_data[i].x,loaded_attribute_data[i].y)
+
+
 		player.global_position = _player_state.player_position
 		player.global_rotation = _player_state.player_rotation
 		
@@ -95,10 +113,10 @@ func load_player_state(player, passed_slot:String):
 			player.player_interaction_component.set_state()
 		
 		player.player_state_loaded.emit()
-		player._on_player_state_loaded()
 	else:
 		print("CSM: Player state of slot ", passed_slot, " doesn't exist.")
 		
+
 
 func save_player_state(player, slot:String):
 	if !_player_state:
@@ -106,7 +124,6 @@ func save_player_state(player, slot:String):
 		_player_state = CogitoPlayerState.new()
 	
 	# Writing the save state from current player node.
-	
 	_player_state.player_inventory = player.inventory_data #Saving player inventory
 	
 	# Saving current quests to player state.
@@ -135,13 +152,23 @@ func save_player_state(player, slot:String):
 	_player_state.player_position = player.global_position
 	_player_state.player_rotation = player.global_rotation
 	
-	_player_state.player_health.x = player.health_component.current_health
-	_player_state.player_health.y = player.health_component.max_health
-	_player_state.player_stamina.x = player.stamina_component.current_stamina
-	_player_state.player_stamina.y = player.stamina_component.max_stamina
-	_player_state.player_sanity.x = player.sanity_component.current_sanity
-	_player_state.player_sanity.y = player.sanity_component.max_sanity
+	## New way of saving attributes:
+	_player_state.clear_saved_attribute_data()
+	for attribute in player.player_attributes:
+		var attribute_data : Vector2 = Vector2(attribute.value_current,attribute.value_max)
+		_player_state.add_player_attribute_to_state_data(attribute_data)
+
+	## Adding a screenshot
+	var screenshot_path : String = str(_player_state.player_state_dir + _active_slot + ".png")
+	if _screenshot_to_save:
+		_screenshot_to_save.save_png(screenshot_path)
+		_player_state.player_state_screenshot_file = screenshot_path
+	else:
+		print("CSM: No screenshot to save was passed.")
 	
+	## Getting time of saving
+	_player_state.player_state_savetime = int(Time.get_unix_time_from_system())
+
 	#Writing the state from current player interaction component:
 	var current_player_interaction_component = player.player_interaction_component
 	_player_state.clear_saved_interaction_component_state()
@@ -149,6 +176,14 @@ func save_player_state(player, slot:String):
 	
 	_player_state.write_state(slot)
 #endregion
+
+
+func get_active_slot_player_state_screenshot_path() -> String:
+	if _player_state and _player_state.state_exists(_active_slot):
+		_player_state = _player_state.load_state(_active_slot) as CogitoPlayerState
+		return _player_state.player_state_screenshot_file
+	else:
+		return ""
 
 
 func load_scene_state(_scene_name_to_load:String, slot:String):

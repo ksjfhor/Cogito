@@ -1,4 +1,4 @@
-[gd_scene load_steps=149 format=3 uid="uid://cud7jwvomj24d"]
+[gd_scene load_steps=146 format=3 uid="uid://cud7jwvomj24d"]
 
 [ext_resource type="PackedScene" uid="uid://kicjwmh02uwf" path="res://COGITO/PrefabScenes/player.tscn" id="1_7d2n7"]
 [ext_resource type="Script" path="res://COGITO/SceneManagement/cogito_scene.gd" id="1_b15oo"]
@@ -10,7 +10,7 @@
 [ext_resource type="PackedScene" uid="uid://d3m4ni301eso7" path="res://COGITO/PrefabScenes/carriable_box.tscn" id="6_cy1m6"]
 [ext_resource type="PackedScene" uid="uid://lsun1f1wjfxl" path="res://COGITO/PrefabScenes/ceiling_lamp.tscn" id="7_3y6g2"]
 [ext_resource type="PackedScene" uid="uid://bho0nwh5rlnua" path="res://COGITO/PrefabScenes/target_destructable.tscn" id="8_tk621"]
-[ext_resource type="PackedScene" uid="uid://l61jtpfxu5x5" path="res://COGITO/Components/BasicInteraction.tscn" id="8_wnjgg"]
+[ext_resource type="PackedScene" uid="uid://l61jtpfxu5x5" path="res://COGITO/Components/Interactions/BasicInteraction.tscn" id="8_wnjgg"]
 [ext_resource type="PackedScene" uid="uid://bdyukj85qkut0" path="res://COGITO/PrefabScenes/door.tscn" id="8_xabdk"]
 [ext_resource type="Resource" uid="uid://d4gdqvqsiiqs5" path="res://COGITO/InventoryPD/Items/Cogito_Key.tres" id="9_g1bqh"]
 [ext_resource type="PackedScene" uid="uid://8wkt5k4dl40u" path="res://COGITO/PrefabScenes/Pickups/pickup_key.tscn" id="9_qv8nx"]
@@ -25,13 +25,13 @@
 [ext_resource type="PackedScene" uid="uid://cjs44e1ow53rv" path="res://COGITO/PrefabScenes/heal_zone.tscn" id="19_2mngh"]
 [ext_resource type="PackedScene" uid="uid://8h462cd7whew" path="res://COGITO/PrefabScenes/hazard_zone.tscn" id="20_dgnbq"]
 [ext_resource type="PackedScene" uid="uid://bnygtkw3tvet6" path="res://COGITO/PrefabScenes/press_and_hold_wheel.tscn" id="22_ni6um"]
-[ext_resource type="Script" path="res://COGITO/Scripts/Cogito_Door.gd" id="23_rfav8"]
+[ext_resource type="Script" path="res://COGITO/CogitoObjects/Cogito_Door.gd" id="23_rfav8"]
 [ext_resource type="PackedScene" uid="uid://3gwo23kpr58f" path="res://COGITO/PrefabScenes/lightzone_lamp.tscn" id="24_p17c7"]
 [ext_resource type="AudioStream" uid="uid://ftl7je6blfwq" path="res://COGITO/Assets/Audio/Kenney/stoneDrag4.ogg" id="25_3nnou"]
 [ext_resource type="PackedScene" uid="uid://bc52bohkbf1yp" path="res://COGITO/PrefabScenes/Pickups/pickup_diamond_key_a.tscn" id="25_w5f1m"]
 [ext_resource type="PackedScene" uid="uid://djfg6ea5cbhyv" path="res://COGITO/PrefabScenes/Pickups/pickup_diamond_key_b.tscn" id="26_1prk2"]
 [ext_resource type="Texture2D" uid="uid://cgcrwmu2bs4se" path="res://COGITO/Assets/Textures/Prototype Textures/PNG/Green/texture_01.png" id="27_0a6c2"]
-[ext_resource type="Script" path="res://COGITO/Scripts/Cogito_Switch.gd" id="27_r5oie"]
+[ext_resource type="Script" path="res://COGITO/CogitoObjects/Cogito_Switch.gd" id="27_r5oie"]
 [ext_resource type="Resource" uid="uid://gu1buq254o4l" path="res://COGITO/InventoryPD/Items/Cogito_DiamondKey_Combine.tres" id="28_3r4lg"]
 [ext_resource type="AudioStream" uid="uid://bfmqga66x7l1k" path="res://COGITO/Assets/Audio/Kenney/rockHit2.ogg" id="30_42jtk"]
 [ext_resource type="PackedScene" uid="uid://o0xgl5obc551" path="res://COGITO/PrefabScenes/Pickups/pickup_pistol.tscn" id="30_a7v26"]
@@ -40,12 +40,11 @@
 [ext_resource type="Texture2D" uid="uid://cg5knuav7df4o" path="res://COGITO/Assets/Graphics/HintIcons/Hint_X.png" id="36_7nev7"]
 [ext_resource type="AudioStream" uid="uid://b6wdy2102jymr" path="res://COGITO/Assets/Audio/Kenney/UiAudio/switch2.ogg" id="36_42jeg"]
 [ext_resource type="Material" uid="uid://dhg1uhiq7ywn2" path="res://COGITO/Assets/Materials/Prototype_Green.tres" id="38_l5vpp"]
-[ext_resource type="Script" path="res://COGITO/Scripts/ladder_area.gd" id="39_ferka"]
-[ext_resource type="PackedScene" uid="uid://c6dn6bn47xyrj" path="res://COGITO/Assets/Models/ladder.glb" id="39_ri7bt"]
 [ext_resource type="PackedScene" uid="uid://dkie3md1cmsip" path="res://COGITO/EasyMenus/Scenes/tab_menu.tscn" id="40_6m7mg"]
+[ext_resource type="PackedScene" uid="uid://i7fum2jx3ac3" path="res://COGITO/PrefabScenes/ladder.tscn" id="41_q27ev"]
 [ext_resource type="Script" path="res://COGITO/Scripts/scene_transition_zone.gd" id="43_bchdf"]
-[ext_resource type="Script" path="res://COGITO/Scripts/Cogito_Object.gd" id="45_ubu8v"]
-[ext_resource type="PackedScene" uid="uid://cct0itdltyppg" path="res://COGITO/Components/ReadableComponent.tscn" id="46_tumg2"]
+[ext_resource type="Script" path="res://COGITO/CogitoObjects/Cogito_Object.gd" id="45_ubu8v"]
+[ext_resource type="PackedScene" uid="uid://cct0itdltyppg" path="res://COGITO/Components/Interactions/ReadableComponent.tscn" id="46_tumg2"]
 [ext_resource type="AudioStream" uid="uid://d32mt2lrtuogk" path="res://COGITO/Assets/Audio/Kenney/bookOpen.ogg" id="47_34dsu"]
 [ext_resource type="PackedScene" uid="uid://i4rqcx7lyrfd" path="res://COGITO/PrefabScenes/keypad_prefab.tscn" id="48_150m3"]
 [ext_resource type="Script" path="res://COGITO/QuestSystemPD/Components/QuestUpdater.gd" id="49_obvm3"]
@@ -271,7 +270,7 @@ script = ExtResource("16_fg1wi")
 inventory_item = ExtResource("17_nl6sa")
 quantity = 2
 
-[sub_resource type="Resource" id="Resource_ttghn"]
+[sub_resource type="Resource" id="Resource_1mbxj"]
 resource_local_to_scene = true
 script = ExtResource("2_chxar")
 inventory_slots = Array[ExtResource("16_fg1wi")]([SubResource("Resource_wdflo"), SubResource("Resource_hpi7r"), null, null])
@@ -349,16 +348,10 @@ size = Vector3(1.5, 0.01, 1.5)
 [sub_resource type="BoxShape3D" id="BoxShape3D_ht4uj"]
 size = Vector3(100, 3, 100)
 
-[sub_resource type="Resource" id="Resource_c4jpd"]
+[sub_resource type="Resource" id="Resource_j6n0w"]
 resource_local_to_scene = true
 script = ExtResource("2_chxar")
 inventory_slots = Array[ExtResource("16_fg1wi")]([null, null, null, null, null, null, null, null])
-
-[sub_resource type="BoxShape3D" id="BoxShape3D_rj7xk"]
-size = Vector3(0.139, 3.148, 0.8)
-
-[sub_resource type="BoxShape3D" id="BoxShape3D_xagqk"]
-size = Vector3(0.8, 3.03359, 0.1)
 
 [sub_resource type="BoxMesh" id="BoxMesh_fj0b6"]
 size = Vector3(3, 2.5, 2)
@@ -1260,7 +1253,7 @@ transform = Transform3D(1, 0, 0, 0, 0.707107, 0.707107, 0, -0.707107, 0.707107, 
 [node name="Chest" parent="INTERACTIVE_OBJECTS" groups=["external_inventory"] instance=ExtResource("14_d7sxi")]
 transform = Transform3D(0.686504, 0, -0.727126, 0, 1, 0, 0.727126, 0, 0.686504, -4.38933, 0.0425703, 5.97176)
 inventory_name = "Chest"
-inventory_data = SubResource("Resource_ttghn")
+inventory_data = SubResource("Resource_1mbxj")
 uses_animation = true
 open_animation = "open"
 
@@ -1477,7 +1470,7 @@ shape = SubResource("BoxShape3D_xr44e")
 [node name="ITEM_PICKUPS" type="Node" parent="."]
 
 [node name="Pickup_Key" parent="ITEM_PICKUPS" instance=ExtResource("9_qv8nx")]
-transform = Transform3D(-0.258819, 0, 0.965926, 0, 1, 0, -0.965926, 0, -0.258819, -20.3432, 1.15447, 14.3198)
+transform = Transform3D(-0.258819, 0, 0.965926, 0, 1, 0, -0.965926, 0, -0.258819, -20.3141, 1.15447, 14.2689)
 
 [node name="Pickup_Battery" parent="ITEM_PICKUPS" instance=ExtResource("13_6m0er")]
 transform = Transform3D(-4.37114e-08, 0, -1, 0, 1, 0, 1, 0, -4.37114e-08, -4.8169, 0.119063, 2.84064)
@@ -1620,34 +1613,20 @@ transform = Transform3D(-1, 0, 8.74228e-08, 0, 1, 0, -8.74228e-08, 0, -1, 2.1480
 transform = Transform3D(-1, 0, 7.45058e-07, 0, 1, 0, -7.45058e-07, 0, -1, -7.5375, 0.905039, -3.30884)
 pause_menu = NodePath("../TabMenu")
 player_hud = NodePath("../Player_HUD")
-is_using_sanity = false
-inventory_data = SubResource("Resource_c4jpd")
+inventory_data = SubResource("Resource_j6n0w")
 step_height_camera_lerp = 1.5
 
 [node name="Player_HUD" parent="." node_paths=PackedStringArray("player") instance=ExtResource("4_1ofwa")]
 player = NodePath("../Player")
-use_brightness_component = true
-use_stamina_component = true
 
-[node name="TabMenu" parent="." instance=ExtResource("40_6m7mg")]
+[node name="TabMenu" parent="." node_paths=PackedStringArray("nodes_to_focus") instance=ExtResource("40_6m7mg")]
+nodes_to_focus = [NodePath("Content/TabContainer/Game/VBoxContainer/ResumeGameButton"), NodePath("Content/TabContainer/Gameplay/ScrollContainer/VBoxContainer/InvertYAxisCheckButton"), null, NodePath("Content/TabContainer/Audio/ScrollContainer/VBoxContainer/MarginContainer/VBoxContainer/SFXVolumeSlider"), null]
 
-[node name="Ladder" type="Area3D" parent="."]
-transform = Transform3D(-2.98023e-08, 0, -1, 0, 1, 0, 1, 0, -2.98023e-08, -18.4395, 1.6, -4.87125)
-script = ExtResource("39_ferka")
-
-[node name="ladderArea" type="CollisionShape3D" parent="Ladder"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.1, 0, 0)
-shape = SubResource("BoxShape3D_rj7xk")
-
-[node name="ladder" parent="Ladder" instance=ExtResource("39_ri7bt")]
-transform = Transform3D(-4.37114e-08, 0, -1, 0, 1, 0, 1, 0, -4.37114e-08, 0, 0, 0)
-
-[node name="CollisionShape3D" type="CollisionShape3D" parent="Ladder/ladder"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.00152588, -0.0832032, 0)
-shape = SubResource("BoxShape3D_xagqk")
+[node name="Ladder" parent="." instance=ExtResource("41_q27ev")]
 
 [node name="Stairs" type="Node3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -23.8, 0.15, 0.75)
+metadata/_edit_group_ = true
 
 [node name="CSGBox3D" type="CSGBox3D" parent="Stairs"]
 use_collision = true
