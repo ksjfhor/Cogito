@@ -1,7 +1,7 @@
 ![COGITO_banner](docs/Cogito_capsule_202402_jpg.jpg)
 # COGITO
 [![GodotEngine](https://img.shields.io/badge/Godot_4.2.1_stable-blue?logo=godotengine&logoColor=white)](https://godotengine.org/) [![COGITO](https://img.shields.io/badge/beta_202403-35A1D7?label=COGITO&labelColor=0E887A)](https://github.com/Phazorknight/Cogito)
-beta 202403.23
+beta 202403.25
 
 ## What is it?
 COGITO is a first Person Immersive Sim Template Project for Godot Engine 4.
@@ -40,9 +40,10 @@ COGITO is made by [Philip Drobar](https://www.philipdrobar.com) with help from [
 
 
 ## Videos
-**(OLD) Video giving an overview of features: [COGITO Overview](https://www.youtube.com/watch?v=LYBo1_Qfru0)
+**(OLD) Video giving an overview of features: [COGITO Overview](https://www.youtube.com/watch?v=LYBo1_Qfru0)**
 
 [![COGITO Sliding door from scratch](docs/cog_tut_sliding_door.jpg)](https://youtu.be/rLBSxqjXlWY)
+[![COGITO Wieldables Overview](docs/cog_tut_wieldables.jpg)](https://www.youtube.com/watch?v=9TK4Tw48nKQ)
 
 ## Thanks and Contributions
 - AC-Arcana: added DynamicFootstepSystem

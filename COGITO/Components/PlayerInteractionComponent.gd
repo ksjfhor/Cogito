@@ -228,6 +228,10 @@ func attempt_reload():
 		print("Can't interrupt current action / animation")
 		return
 	
+	# If the item doesn't use reloading, return.
+	if equipped_wieldable_item.no_reload:
+		return
+	
 	var ammo_needed : int = abs(equipped_wieldable_item.charge_max - equipped_wieldable_item.charge_current)
 	if ammo_needed <= 0:
 		print("Wieldable is fully charged.")
@@ -261,9 +265,19 @@ func attempt_reload():
 		equipped_wieldable_item.update_wieldable_data(self)
 
 
+func on_death():
+	if equipped_wieldable_item:
+		equipped_wieldable_item.is_being_wielded = false
+	
+	if carried_object:
+		carried_object = null
+		
+	is_wielding = false
+	is_carrying = false
+
 
 # Function called by interactables if they need to send a hint. The signal sent here gets picked up by the Player_Hud_Manager.
-func send_hint(hint_icon,hint_text):
+func send_hint(hint_icon: Texture2D, hint_text: String):
 	hint_prompt.emit(hint_icon,hint_text)
 
 

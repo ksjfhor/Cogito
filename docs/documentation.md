@@ -3,7 +3,9 @@
 > The documentation is still work in progress and will be updated over time.
 
 > [!IMPORTANT]  
-> This documenation will give you an overview of the most important properties & methods of the different nodes and how to use them. If you want to dive deeper into the code, you can also read the comments in the source code.
+> This documenation will give you an overview of the most important properties & methods of the different nodes and how to use them.
+> This documentation does not always list each and every function or exposed property, as these are better explored in the editor itself and include tooltips on how to use them.
+> If you want to dive deeper into the code, you can also read the comments in the source code.
 
 **Table of Contents**
 - [Documentation](#documentation)
@@ -73,7 +75,9 @@
 
 # Intro to COGITO
 COGITO is a fully featured template. It is recommended to use this as the starting point of your project BEFORE implementing any of your own features.
-(TODO expand this section)
+We strongly recommend playing through the included demo scenes to get a good impression of what functionality is included. While COGITO is designed with modularity and versatility in mind, it is usually easier to modify the included systems than try to make it work with other external systems (like using a different inventory system or player controller).
+The most common tasks most users will run into is adapting their own assets and levels to work with COGITO. I'm in the process of creating video tutorials for these cases which should help you get started quickly.
+
 
 ## COGITO Setup
 1. Clone this repo or download it and unzip it into it's own directory.
@@ -102,7 +106,8 @@ To enable transitioning between scenes, your scene root node needs to have cogit
 
 
 # Player Controller
-(work in progress)
+COGITO includes a first person player controller that has a variety of parameters and settings built-in. We recommend just reading through the descriptions and tweaking the parameters to your liking.
+Most common adjustments needed are walking, running and sprinting speeds, stair handling, ladder handling. Be aware that a few of the player controller parameters will be controlled by the game options and are thus user controlled (for example Invert Y Axis).
 
 
 # Cogito Attributes
@@ -113,23 +118,23 @@ The base class used for any attributes is the CogitoAttribute class.
 
 Properties:
   - **attribute_name** (String)
-    - String used in scripts to find specific attributes. Make sure this is all lowercase and without spaces.
+	- String used in scripts to find specific attributes. Make sure this is all lowercase and without spaces.
   - **attribute_display_name** (String)
-    - As it would appear in the game.
+	- As it would appear in the game.
   - **attribute_color** (Color)
-    - Used for UI elements
+	- Used for UI elements
   - **attribute_icon** (Texture2D)
-    - Used for UI elements
+	- Used for UI elements
   - **value_max** (float)
-    - The maximum value of this attribute. Can change over time and is saved in the player state file.
+	- The maximum value of this attribute. Can change over time and is saved in the player state file.
   - **value_start** (float)
-    - The start value of this attribute.
-      
+	- The start value of this attribute.
+	  
 Signals:
   - **attribute_changed**(attribute_name: String, value_current: float, value_max: float, has_increased: bool)
-    - Gets emitted anytime the attribute value changes. If the value change was positive, has_increased will be true, if not it's false)
+	- Gets emitted anytime the attribute value changes. If the value change was positive, has_increased will be true, if not it's false)
   - **attribute_reached_zero**(attribute_name: String, value_current: float, value_max: float)
-    - Gets emitted when the current value of this attribute is 0.
+	- Gets emitted when the current value of this attribute is 0.
 
 
 ## Health Attribute
@@ -137,21 +142,21 @@ This attribute is not just for player health. You can attach the component to ob
 
 Properties:
   - **no_sanity_damage** (float)
-    - used in combination with the sanity attribute. Defines how much damage per second the owner takes if their sanity attribute has reached zero.
+	- used in combination with the sanity attribute. Defines how much damage per second the owner takes if their sanity attribute has reached zero.
   - **sound_on_damage** (AudioStream)
-    - AudioStream that plays when the owner takes damage.
+	- AudioStream that plays when the owner takes damage.
   - **sound_on_death** (AudioStream)
-    - AudioStream that plays when the owner dies (health reaches zero).
+	- AudioStream that plays when the owner dies (health reaches zero).
   - **destroy_on_death** (Array[NodePath])
-    - When the owner dies, all the nodes which nodepaths are in this array will get destroyed (queue_free())
+	- When the owner dies, all the nodes which nodepaths are in this array will get destroyed (queue_free())
   - **spawn_on_death** (PackedScene)
-    - When the owner dies, the packed scene will be instantiate at the owners global position. This is most commonly used for VFX or item drops.
+	- When the owner dies, the packed scene will be instantiate at the owners global position. This is most commonly used for VFX or item drops.
 
 Signals:
   - **damage_taken**()
-    - Gets emitted when the owner takes damage (attribute value decreases). Can be used for VFX, audio.
+	- Gets emitted when the owner takes damage (attribute value decreases). Can be used for VFX, audio.
   - **death**()
-    - Gets emitted when the owner dies. Can be used for VFX, audio, triggering cutscenes, updating quests, etc.
+	- Gets emitted when the owner dies. Can be used for VFX, audio, triggering cutscenes, updating quests, etc.
 
 
 ## Stamina Attribute
@@ -160,34 +165,85 @@ This attribute works in tight connection with the Player controller. When in use
 
 Properties:
   - **stamina_regen_speed** (float)
-    - How fast stamina regenerates in points per second.
+	- How fast stamina regenerates in points per second.
   - **run_exhaustion_speed** (float)
-    - How fast sprinting reduces stamina in points per seconds of sprinting.
+	- How fast sprinting reduces stamina in points per seconds of sprinting.
   - **jump_exhaustion** (float)
-    - How much stamina jumping consumes in points.
+	- How much stamina jumping consumes in points.
   - **regenerate_after** (float)
-    - The delay after using the last stamina-consuming action before stamina starts regenerating, in seconds.
+	- The delay after using the last stamina-consuming action before stamina starts regenerating, in seconds.
   - **auto_regenerate** (float)
-    - If turned off, stamina will not auto regenerate.
+	- If turned off, stamina will not auto regenerate.
 
 
 ## Visibility Attribute
-(work in progress)
+**Tip: If you don't want to use the Visibility system, simply remove the VisibilityAttribute from your Player scene.** 
+(This used to be called Brightness component).
+The Visibility Attribute represents how "visible" the player is within a scene. It is important to understand that this attribute is not actually tied to Lights within your scene. Instead, it works by counting how many Lightzones the player is currently in, which are their own component. This was decided to give developers the best control on how visible the player is at any spot inside a level.
+This attribute can then be checked by other entities, whenever they have a reference to the player. A common example would be that if the player enters the viewcone of a NPC, you might still want the NPC to not detect the player if they're shrouded in complete darkness, or detect the player faster, the higher their visibility is.
 
 
 ## Sanity Attribute
 (work in progress)
 
+## UI Attribute Component
+This packaged scene is used to reperesent attributes in the Player HUD. In the default COGITO Setup, the Player HUD checks which attribute nodes are part of the Player scene and instantiated a UI Attribute Component for each one in the Attribute Container.
+
+The UI Attribute Component reads all properties and connects to all signals needed directly from the Attribute itself (color, icon, name, values).
+You can customize the component to fit your own needs. Alterantively, you can also define explicit attribute components for each attribute if you create a direct reference in the PlayerHUD script (this involves some coding).
+To change where the Attribute UIs show, change the location of the PlayerAttributes PanelContainer.
+
 
 # Player Interaction System
-Cogito works with a raycast interaction system. This means that the player camera contains a raycast3d that constantly checks what the player is looking at. If an interactive object is detected, the raycast checks what kind of interaction components are attached to the object and displays interaction prompts accordingly.
+COGITO works with a raycast interaction system. This means that the player camera contains a raycast3d that constantly checks what the player is looking at. If an interactive object is detected, the raycast checks what kind of interaction components are attached to the object and displays interaction prompts accordingly.
 
 **Help, my object doesn't get detected by the interaction system?**
 - Check that the object is a Cogito Object or one of it's variants.
-- Check that the object is set to the correct collision layers. The interaction raycast is set to detect on layer 2 by default.
+- Check that the object is set to the correct collision layers. The interaction raycast is set to detect on layer 2 by default. Also be aware that the interaction raycast will be blocked by collision shapes on layer 1.
 - Check that the object has collision shapes.
-- Check that the object contain interaction components. If you use custom interaction components, try to swap to default ones to see if the behaviour changes.
- 
+- Check that the object contains one or more interaction components. If you use custom interaction components, try to swap to default ones to see if the behaviour changes.
+
+
+ # Cogito Objects
+Cogito Objects refers to classes specifcally created to work with all of COGITO's systems. These are designed to represent the most commonly used interactive objects in games. Below you'll find a brief explanation what each object does so you know which one to choose when you want to turn your own asset into a suitable Cogito Object.
+Interactables consider of two major parts: The object itself and the InteractionComponents attached as child nodes to define what kind of interactions can be done.
+
+Here's a quick overview which object to use for what use-case:
+| Cogito Object/Script  | Use case |
+| ------------- | ------------- |
+| Cogito_Object | Item pick-ups, props, crates, "clutter objects" |
+| Cogito_Door | Doors, gates, manually controlled platforms, bridges, moveable objects with two positions (open/closed)  |
+| Cogito_Button | Button that unlocks a door (single-use), vending machine buttons (repeated-use)  |
+| Cogito_Switch | Lamps, levers, sockets for key objects, objects with two states (on/off) |
+| Cogito_Keypad | Keypads, other UI based minigames that should send signals. |
+| Cogito_Turnwheel | Valves, rotation-based levers, press-and-hold interactions |
+
+
+## Cogito_Object
+This is the basis of most smaller interactive objects. Item pickups, crates, and common "clutter objects" would utilize this.
+Use a Cogito_Object if you want to do any of the following:
+ - You want the object to be moved around within the level scene (Cogito_Object saves position and rotation, works well with RigidBodies)
+ - You want to use a variety of included interactions (most other objects have bespoke interactions, Cogito_Object is made to use a mix of interaction components)
+ - This object might not always exist in the level scene (Cogito_Object are based on PackedScenes and sometimes get instanced on runtime, COGITO also saves if a Cogito_Object exists in a scene or not)
+
+## Cogito_Door
+(work in progress)
+
+## Cogito_Button
+(work in progress)
+
+## Cogito_Switch
+(work in progress)
+
+## Cogito_Keypad
+This classic Keypad works exactly as you expect. The included PackedScene includes it's own GUI, which can be easily customized.
+The Cogito_Keypad includes exposed references to work with Cogito_Doors, but you can also set them to trigger other objects by using the included signals.
+
+## Cogito_Turnwheel
+With this you can create most common "press and hold" interaction that involve turning an object, like a valve. Is made to work with a HoldInteraction component.
+This object includes settings for rotation axis and speed as well as an AudioStream to play while being rotated.
+It also includes an exposed reference to trigger other nodes (most commonly used for doors).
+
 
 
 # Game persistence, saving and loading
@@ -273,16 +329,6 @@ The scene state contains the following data:
 
 
 ### --- OLD DOCUMENTATION BEYOND THIS POINT ---
-
-## Saving, Loading and Persistence - Scene Management
-- Save states are saved per default in dir "user://"
-- Player state and scene states are saved separately. That way the player save doesn't bloat with game size and there's some other minor comforts. 
-- Currently the following objects are saved:
-  - Cogito_Pickup.gd / Cogito_Carriable.gd: Since their existence in the scene can vary, these will be re-instantiated at their saved position if a scene state is loaded. Thus they need to be PackagedScenes to work!
-  - Cogito_Door: These will have their state saved (open/closed/locked)
-  - Cogito_Switch: These will have their state saved (on/off)
-- The following is still WIP or are not being saved:
-  - Destructable objects like the target.
 
 
 ## Interactables

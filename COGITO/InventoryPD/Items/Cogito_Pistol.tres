@@ -6,13 +6,14 @@
 
 [resource]
 script = ExtResource("2_otaa7")
+no_reload = false
 charge_max = 10.0
 ammo_item_name = "Foam Bullets"
 charge_current = 10.0
 wieldable_range = 10.0
 wieldable_damage = 1.0
 name = "Foam Pistol"
-descpription = "There's a reason it looks like a toy. Shoots foam bullets."
+description = "There's a reason it looks like a toy. Shoots foam bullets."
 icon = ExtResource("1_t40ae")
 is_stackable = false
 stack_size = 0

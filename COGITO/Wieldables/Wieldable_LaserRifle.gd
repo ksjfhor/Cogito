@@ -1,8 +1,10 @@
-extends Node3D
+extends CogitoWieldable
 
 @export_group("Laser Rifle Settings")
+## Determines delay between shots aka fire rate.
+@export var firing_delay : float = 0.2
 ## Node for the laser origin
-@onready var bullet_point: Node3D = $LaserRifleMesh/Bullet_Point
+@onready var bullet_point: Node3D = %Bullet_Point
 ## Prefab of laser_ray
 @export var laser_ray_prefab : PackedScene
 ## How long laser rays linger in the air
@@ -17,29 +19,9 @@ extends Node3D
 @export var sound_secondary_use : AudioStream
 @export var sound_reload : AudioStream
 
-@export_group("General Wieldable Settings")
-## Item resource that this wieldable refers to.
-@export var item_reference : WieldableItemPD
-## Visible parts of the wieldable. Used to hide/show on equip/unequip.
-@export var wieldable_mesh : Node3D
-
-@export_group("Animations")
-@onready var animation_player: AnimationPlayer = $AnimationPlayer
-@onready var audio_stream_player_3d = $AudioStreamPlayer3D
-
-@export var anim_equip: String = "equip"
-@export var anim_unequip: String = "unequip"
-@export var anim_action_primary: String = "action_primary"
-@export var anim_action_secondary: String = "action_secondary"
-@export var anim_reload: String = "reload"
-
-### Every wieldable needs the following functions:
-### equip(_player_interaction_component), unequip(), action_primary(), action_secondary(), reload()
-
-var player_interaction_component : PlayerInteractionComponent # Stores the player interaction component
 var spawn_node : Node
 var is_firing : bool = false
-var firing_delay : float = 0.2
+
 var firing_cooldown : float
 
 var inventory_item_reference : WieldableItemPD
@@ -71,6 +53,7 @@ func _physics_process(_delta: float) -> void:
 			
 			firing_cooldown = firing_delay
 
+
 # This gets called by player interaction compoment when the wieldable is equipped and primary action is pressed
 func action_primary(_passed_item_reference : InventoryItemPD, _is_released: bool):
 	inventory_item_reference = _passed_item_reference
@@ -97,7 +80,7 @@ func action_secondary(is_released:bool):
 		tween_pistol.tween_property(self,"position", Vector3(0,default_position.y,default_position.z), .2)
 
 
-func hit_scan_collision(collision_point):
+func hit_scan_collision(collision_point:Vector3):
 	var bullet_direction = (collision_point - bullet_point.get_global_transform().origin).normalized()
 	var new_intersection = PhysicsRayQueryParameters3D.create(bullet_point.get_global_transform().origin, collision_point + bullet_direction * 2)
 	
@@ -105,7 +88,7 @@ func hit_scan_collision(collision_point):
 	
 	# Spawning a laser ray
 	var instantiated_ray = laser_ray_prefab.instantiate()
-	instantiated_ray.draw_ray(bullet_point.get_global_transform().origin, collision_point + bullet_direction)
+	instantiated_ray.draw_ray(bullet_point.get_global_transform().origin, collision_point)
 	spawn_node.add_child(instantiated_ray)
 	
 	if bullet_collision:
@@ -124,13 +107,8 @@ func reload():
 	audio_stream_player_3d.play()
 
 
-# Function called when wieldable is unequipped.
+# Function called when wieldable is equipped.
 func equip(_player_interaction_component: PlayerInteractionComponent):
 	spawn_node = get_tree().get_current_scene()
 	animation_player.play(anim_equip)
 	player_interaction_component = _player_interaction_component
-
-
-# Function called when wieldable is unequipped.
-func unequip():
-	animation_player.play(anim_unequip)

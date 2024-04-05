@@ -6,13 +6,14 @@
 
 [resource]
 script = ExtResource("2_o1rdd")
+no_reload = false
 charge_max = 100.0
 ammo_item_name = "Laser Ammo"
 charge_current = 100.0
 wieldable_range = 100.0
 wieldable_damage = 1.0
 name = "Laser Rifle"
-descpription = "Goes pew pew pew. Nees Laser Ammo to reload."
+description = "Goes pew pew pew. Needs Laser Ammo to reload."
 icon = ExtResource("1_62c38")
 is_stackable = false
 stack_size = 0

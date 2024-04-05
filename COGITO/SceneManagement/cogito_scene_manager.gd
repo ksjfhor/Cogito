@@ -25,6 +25,15 @@ func _ready() -> void:
 	_player_state = get_existing_player_state(_active_slot) #Setting active slot (per default it's A)
 
 
+func switch_active_slot_to(slot_name:String):
+	_player_state = null
+	_player_state = get_existing_player_state(slot_name)
+	if !_player_state:
+		print("CSM: Existing player state for slot ", slot_name, " not found.")
+	_active_slot = slot_name
+	print("CSM: Active slot switched to ", _active_slot)
+	
+
 func get_existing_player_state(passed_slot) -> CogitoPlayerState:
 	var player_state_file : String = cogito_state_dir + cogito_player_state_prefix + passed_slot + ".res"
 	print("CSM: Looking for file: ", player_state_file)
@@ -101,7 +110,6 @@ func load_player_state(player, passed_slot:String):
 		for i in loaded_attribute_data.size():
 			player.player_attributes[i].set_attribute(loaded_attribute_data[i].x,loaded_attribute_data[i].y)
 
-
 		player.global_position = _player_state.player_position
 		player.global_rotation = _player_state.player_rotation
 		
@@ -110,7 +118,7 @@ func load_player_state(player, passed_slot:String):
 		for state_data in player_interaction_component_state:
 			for data in state_data.keys():
 				player.player_interaction_component.set(data, state_data[data])
-			player.player_interaction_component.set_state()
+			player.player_interaction_component.set_state.call_deferred() #Calling this deferred as some state calls need to make sure the scene is finished loading.
 		
 		player.player_state_loaded.emit()
 	else:
@@ -168,6 +176,7 @@ func save_player_state(player, slot:String):
 	
 	## Getting time of saving
 	_player_state.player_state_savetime = int(Time.get_unix_time_from_system())
+	_player_state.player_state_slot_name = _active_slot
 
 	#Writing the state from current player interaction component:
 	var current_player_interaction_component = player.player_interaction_component
@@ -184,6 +193,7 @@ func get_active_slot_player_state_screenshot_path() -> String:
 		return _player_state.player_state_screenshot_file
 	else:
 		return ""
+
 
 
 func load_scene_state(_scene_name_to_load:String, slot:String):
@@ -286,5 +296,5 @@ func load_next_scene(target : String, connector_name: String, passed_slot: Strin
 
 
 func reset_scene_states():
-	# CREATE FUNCTION THAT DELETES SCENE STATE FILES.
+	# TODO: CREATE FUNCTION THAT DELETES SCENE STATE FILES.
 	pass
