@@ -1,29 +1,51 @@
-extends TabContainer
 class_name OptionsTabMenu
+extends CogitoTabMenu
 signal options_updated
 
 const HSliderWLabel = preload("res://COGITO/EasyMenus/Scripts/slider_w_labels.gd")
+var config = ConfigFile.new()
 
-@export var nodes_to_focus: Array[Control]
+# GAMEPLAY
+@onready var invert_y_check_button: CheckButton = %InvertYAxisCheckButton
+@onready var headbob_option_button: OptionButton = %HeadbobOptionButton
+@onready var mouse_sens_slider: HSlider = %MouseSensSlider
+@onready var mouse_sens_value_label: Label = %MouseSensValueLabel
+@onready var gp_look_sens_value_label: Label = %GPLookSensValueLabel
+@onready var gp_look_sens_slider: HSlider = %GPLookSensSlider
 
+var gp_looksens : float
+var mouse_sens : float
+var headbob_strength : int
+
+# AUDIO
 @onready var sfx_volume_slider : HSliderWLabel = $%SFXVolumeSlider
 @onready var music_volume_slider: HSliderWLabel = $%MusicVolumeSlider
+
+var sfx_bus_index
+var music_bus_index
+
+# GRAPHICS
 @onready var render_scale_current_value_label: Label = %RenderScaleCurrentValueLabel
 @onready var render_scale_slider: HSlider = %RenderScaleSlider
 @onready var gui_scale_current_value_label: Label = %GUIScaleCurrentValueLabel
 @onready var gui_scale_slider: HSlider = %GUIScaleSlider
 @onready var vsync_check_button: CheckButton = %VSyncCheckButton
-@onready var invert_y_check_button: CheckButton = %InvertYAxisCheckButton
 @onready var anti_aliasing_2d_option_button: OptionButton = $%AntiAliasing2DOptionButton
 @onready var anti_aliasing_3d_option_button: OptionButton = $%AntiAliasing3DOptionButton
 @onready var window_mode_option_button: OptionButton = %WindowModeOptionButton
 @onready var resolution_option_button: OptionButton = %ResolutionOptionButton
 
-var sfx_bus_index
-var music_bus_index
-var config = ConfigFile.new()
 var render_resolution : Vector2i
 var render_scale_val : float
+
+
+
+const HEADBOB_DICTIONARY : Dictionary = {
+	"Minimal" : 1,
+	"Average" : 3,
+	"Full" : 7,
+}
+
 
 # Array to set window modes.
 const WINDOW_MODE_ARRAY : Array[String] = [
@@ -32,7 +54,6 @@ const WINDOW_MODE_ARRAY : Array[String] = [
 	"Windowed",
 	"Borderless windowed",	
 ]
-
 
 const RESOLUTION_DICTIONARY : Dictionary = {
 	"1280x720 (16:9)" : Vector2i(1280,720),
@@ -47,6 +68,10 @@ const RESOLUTION_DICTIONARY : Dictionary = {
 
 
 func _ready() -> void:
+	add_headbob_items()
+	headbob_option_button.item_selected.connect(on_headbob_selected)
+	mouse_sens_slider.value_changed.connect(_on_mouse_sens_slider_value_changed)
+	gp_look_sens_slider.value_changed.connect(_on_gp_looksens_slider_value_changed)
 	add_window_mode_items()
 	add_resolution_items()
 	window_mode_option_button.item_selected.connect(on_window_mode_selected)
@@ -55,44 +80,39 @@ func _ready() -> void:
 	sfx_bus_index = AudioServer.get_bus_index(OptionsConstants.sfx_bus_name)
 	music_bus_index = AudioServer.get_bus_index(OptionsConstants.music_bus_name)
 	
-	#load_options.call_deferred()
 	load_options()
+
 
 # Called from outside initializes the options menu
 func on_open():
 	pass
 
-func _input(event):
-	if !visible:
-		return
+
+# Adding headbob options to the button
+func add_headbob_items() -> void:
+	for headbob_option in HEADBOB_DICTIONARY:
+		headbob_option_button.add_item(headbob_option)
+
+
+func on_headbob_selected(index:int) -> void:
+	headbob_strength = HEADBOB_DICTIONARY.values()[index]
+
+func _on_mouse_sens_slider_value_changed(value):
+	mouse_sens = value
+	mouse_sens_value_label.text = str(value)
 	
-	#Tab navigation
-	if (event.is_action_pressed("ui_next_tab")):
-		if current_tab + 1 == get_tab_count():
-			current_tab = 0
-		else:
-			current_tab += 1
-			
-		if nodes_to_focus[current_tab]:
-			#print("Grabbing focus of : ", tab_container.current_tab, " - ", nodes_to_focus[tab_container.current_tab])
-			nodes_to_focus[current_tab].grab_focus.call_deferred()
-		
-	if (event.is_action_pressed("ui_prev_tab")):
-		if current_tab  == 0:
-			current_tab = get_tab_count()-1
-		else:
-			current_tab -= 1
-			
-		if nodes_to_focus[current_tab]:
-			#print("Grabbing focus of : ", tab_container.current_tab, " - ", nodes_to_focus[tab_container.current_tab])
-			nodes_to_focus[current_tab].grab_focus.call_deferred()
+
+func _on_gp_looksens_slider_value_changed(value):
+	gp_looksens = value
+	gp_look_sens_value_label.text = str(value)
 
 
 # Adding window modes to the window mode button.
 func add_window_mode_items() -> void:
 	for mode in WINDOW_MODE_ARRAY:
 		window_mode_option_button.add_item(mode)
-		
+
+
 # Adding resolutions to the resolution button.
 func add_resolution_items() -> void:
 	for resolution_text in RESOLUTION_DICTIONARY:
@@ -119,6 +139,7 @@ func refresh_render():
 	get_window().content_scale_size = render_resolution
 	get_window().scaling_3d_scale = render_scale_val
 
+
 # Function to change resolution. Hooked up to the resolution_option_button.
 func on_resolution_selected(index:int) -> void:
 	render_resolution = RESOLUTION_DICTIONARY.values()[index]
@@ -144,24 +165,34 @@ func set_volume(bus_index, value):
 
 # Saves the options
 func save_options():
-	config.set_value(OptionsConstants.section_name, OptionsConstants.sfx_volume_key_name, sfx_volume_slider.hslider.value)
-	config.set_value(OptionsConstants.section_name, OptionsConstants.music_volume_key_name, music_volume_slider.hslider.value)
+	config.set_value(OptionsConstants.section_name, OptionsConstants.invert_vertical_axis_key, invert_y_check_button.button_pressed)
+	config.set_value(OptionsConstants.section_name, OptionsConstants.head_bobble_key, headbob_strength)
+	config.set_value(OptionsConstants.section_name, OptionsConstants.mouse_sens_key, mouse_sens)
+	config.set_value(OptionsConstants.section_name, OptionsConstants.gp_looksens_key, gp_looksens)
 	config.set_value(OptionsConstants.section_name, OptionsConstants.windowmode_key_name, window_mode_option_button.selected)
 	config.set_value(OptionsConstants.section_name, OptionsConstants.resolution_index_key_name, resolution_option_button.selected)
 	config.set_value(OptionsConstants.section_name, OptionsConstants.render_scale_key, render_scale_slider.value);
 	config.set_value(OptionsConstants.section_name, OptionsConstants.gui_scale_key, gui_scale_slider.value);
 	config.set_value(OptionsConstants.section_name, OptionsConstants.vsync_key, vsync_check_button.button_pressed)
-	config.set_value(OptionsConstants.section_name, OptionsConstants.invert_vertical_axis_key, invert_y_check_button.button_pressed)
 	config.set_value(OptionsConstants.section_name, OptionsConstants.msaa_2d_key, anti_aliasing_2d_option_button.get_selected_id())
 	config.set_value(OptionsConstants.section_name, OptionsConstants.msaa_3d_key, anti_aliasing_3d_option_button.get_selected_id())
 	
+	config.set_value(OptionsConstants.section_name, OptionsConstants.sfx_volume_key_name, sfx_volume_slider.hslider.value)
+	config.set_value(OptionsConstants.section_name, OptionsConstants.music_volume_key_name, music_volume_slider.hslider.value)
+	
 	config.save(OptionsConstants.config_file_name)
+
 
 # Loads options and sets the controls values to loaded values. Uses default values if config file does not exist
 func load_options():
 	var err = config.load(OptionsConstants.config_file_name)
 	if err != 0:
 		print("Loading options config failed. Assuming and saving defaults.")
+	
+	var invert_y = config.get_value(OptionsConstants.section_name, OptionsConstants.invert_vertical_axis_key, true)
+	mouse_sens = config.get_value(OptionsConstants.section_name, OptionsConstants.mouse_sens_key, 0.25)
+	gp_looksens = config.get_value(OptionsConstants.section_name, OptionsConstants.gp_looksens_key, 2)
+	headbob_strength = config.get_value(OptionsConstants.section_name, OptionsConstants.head_bobble_key, 2)
 	
 	var sfx_volume = config.get_value(OptionsConstants.section_name, OptionsConstants.sfx_volume_key_name, 1)
 	var music_volume = config.get_value(OptionsConstants.section_name, OptionsConstants.music_volume_key_name, 1)
@@ -170,12 +201,31 @@ func load_options():
 	var render_scale = config.get_value(OptionsConstants.section_name, OptionsConstants.render_scale_key, 1)
 	var gui_scale = config.get_value(OptionsConstants.section_name, OptionsConstants.gui_scale_key, 1)
 	var vsync = config.get_value(OptionsConstants.section_name, OptionsConstants.vsync_key, true)
-	var invert_y = config.get_value(OptionsConstants.section_name, OptionsConstants.invert_vertical_axis_key, true)
+
 	var msaa_2d = config.get_value(OptionsConstants.section_name, OptionsConstants.msaa_2d_key, 0)
 	var msaa_3d = config.get_value(OptionsConstants.section_name, OptionsConstants.msaa_3d_key, 0)
 
+	# LOADING GAMEPLAY CFG
+	invert_y_check_button.set_pressed_no_signal(invert_y)
+	invert_y_check_button.emit_signal("toggled", invert_y) #TODO: change this to the new signal emitting syntax
+
+	match headbob_strength:
+		1: headbob_option_button.selected = 0
+		3: headbob_option_button.selected = 1
+		7: headbob_option_button.selected = 2
+	headbob_option_button.item_selected.emit(headbob_option_button.selected)
+
+	mouse_sens_slider.value = mouse_sens
+	mouse_sens_value_label.text = str(mouse_sens)
+
+	gp_look_sens_slider.value = gp_looksens
+	gp_look_sens_value_label.text = str(gp_looksens)
+
+	# LOADING AUDIO CFG
 	sfx_volume_slider.hslider.value = sfx_volume
 	music_volume_slider.hslider.value = music_volume
+	
+	# LOADING GRAPHICS CFG
 	render_scale_slider.value = render_scale
 	render_scale_val = render_scale
 	
@@ -185,10 +235,7 @@ func load_options():
 	
 	# Need to set it like that to guarantee signal to be triggered
 	vsync_check_button.set_pressed_no_signal(vsync)
-	vsync_check_button.emit_signal("toggled", vsync)
-	
-	invert_y_check_button.set_pressed_no_signal(invert_y)
-	invert_y_check_button.emit_signal("toggled", invert_y)
+	vsync_check_button.emit_signal("toggled", vsync)	
 	
 	anti_aliasing_2d_option_button.selected = msaa_2d
 	anti_aliasing_2d_option_button.emit_signal("item_selected", msaa_2d)

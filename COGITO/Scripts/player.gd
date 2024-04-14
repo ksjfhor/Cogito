@@ -53,6 +53,7 @@ var is_showing_ui : bool
 @export var FREE_LOOK_TILT_AMOUNT : float = 5.0
 @export var SLIDING_SPEED : float = 5.0
 @export var SLIDE_JUMP_MOD : float = 1.5
+@export var disable_roll_anim : bool = false
 
 @export_enum("Minimal:1", "Average:3", "Full:7") var HEADBOBBLE : int
 @export var WIGGLE_ON_WALKING_INTENSITY : float = 0.1
@@ -81,8 +82,8 @@ var ladder_on_cooldown : bool = false
 
 @export_group("Gamepad Properties")
 @export var JOY_DEADZONE : float = 0.25
-@export var JOY_V_SENS : int = 3
-@export var JOY_H_SENS : int = 2
+@export var JOY_V_SENS : float = 2
+@export var JOY_H_SENS : float = 2
 
 ## Flag if Stamina component isused (as this effects movement)
 #@export var is_using_stamina : bool = true
@@ -159,6 +160,8 @@ var slide_audio_player : AudioStreamPlayer3D
 
 @onready var self_rid: RID = self.get_rid()
 @onready var test_motion_result: PhysicsTestMotionResult3D = PhysicsTestMotionResult3D.new()
+
+@onready var wieldables = %Wieldables
 #endregion
 
 
@@ -183,18 +186,15 @@ func _ready():
 		if attribute.attribute_name == "stamina": # Saving reference to stamina attribute for movements that require stamina checks
 			stamina_attribute = attribute
 		
-		if attribute.attribute_name == "visibility": #  Saving reference to visibilty attribute for that require stamina checks
+		if attribute.attribute_name == "visibility": #  Saving reference to visibilty attribute for that require visibility checks
 			visibility_attribute = attribute
 			
 		if attribute.attribute_name == "sanity":
 			if visibility_attribute: # Hooking up sanity attribute to visibility attribute
 				visibility_attribute.attribute_changed.connect(attribute.on_visibility_changed)
+				visibility_attribute.check_current_visibility()
 
-
-	#Set the Headbobble for real, as we can not manipulate vars while their created :/
-	WIGGLE_ON_WALKING_SPEED = HEADBOBBLE * 2
-	WIGGLE_ON_SPRINTING_SPEED = HEADBOBBLE * 3
-	WIGGLE_ON_CROUCHING_SPEED = HEADBOBBLE * 1.5
+	apply_headbobble()
 
 	# Pause Menu setup
 	if pause_menu:
@@ -213,6 +213,13 @@ func slide_audio_init():
 	#setup sound effect for sliding
 	slide_audio_player = Audio.play_sound_3d(slide_sound, false)
 	slide_audio_player.reparent(self, false)
+
+
+#Set the Headbobble for real, as we can not manipulate vars while their created :/
+func apply_headbobble():
+	WIGGLE_ON_WALKING_SPEED = HEADBOBBLE * 2
+	WIGGLE_ON_SPRINTING_SPEED = HEADBOBBLE * 3
+	WIGGLE_ON_CROUCHING_SPEED = HEADBOBBLE * 1.5
 
 
 # Use these functions to manipulate player attributes.
@@ -263,7 +270,13 @@ func _reload_options():
 	var err = config.load(OptionsConstants.config_file_name)
 	if err == 0:
 		print("Player.gd: Options reloaded.")
+		
+		HEADBOBBLE = config.get_value(OptionsConstants.section_name, OptionsConstants.head_bobble_key, 1)
+		apply_headbobble()
+		MOUSE_SENS = config.get_value(OptionsConstants.section_name, OptionsConstants.mouse_sens_key, 0.25)
 		INVERT_Y_AXIS = config.get_value(OptionsConstants.section_name, OptionsConstants.invert_vertical_axis_key, true)
+		JOY_H_SENS = config.get_value(OptionsConstants.section_name, OptionsConstants.gp_looksens_key, 2)
+		JOY_V_SENS = config.get_value(OptionsConstants.section_name, OptionsConstants.gp_looksens_key, 2)
 
 
 # Signal from Pause Menu
@@ -568,7 +581,8 @@ func _physics_process(delta):
 			head.position.y = lerp(head.position.y, CROUCHING_DEPTH, delta * LERP_SPEED)
 			standing_collision_shape.disabled = false
 			crouching_collision_shape.disabled = true
-			animationPlayer.play("roll")
+			if !disable_roll_anim:
+				animationPlayer.play("roll")
 		elif last_velocity.y <= -5.0:
 			animationPlayer.play("landing")
 		
